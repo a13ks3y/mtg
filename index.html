@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="icon.png" type="image/png">
+    <link rel="canonical" href="https://a13ks3y.github.io/mtg/">
+    <link rel="manifest" href="/mtg/manifest.webmanifest" crossorigin="use-credentials">
+    <title>Match Three Game</title>
+    <style>
+        html, body {
+            font-size: 16px;
+            margin: 0; padding: 0;
+            position: absolute;
+            left: 0;
+            top: 0;
+            right: 0;
+            bottom: 0;
+        }
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #333;
+        }
+        canvas {
+        }
+    </style>
+</head>
+<body>
+    <canvas id="ctx"></canvas>
+    <script src="gem.js" charset="UTF-8"></script>
+    <script src="cell.js" charset="UTF-8"></script>
+    <script src="grid.js" charset="UTF-8"></script>
+    <script src="index.js" charset="UTF-8"></script>
+    <script>
+        if (navigator.serviceWorker) {
+            navigator.serviceWorker.register('/mtg/sw.js', {scope: '/mtg/'});
+        }
+    </script>
+</body>
+</html>

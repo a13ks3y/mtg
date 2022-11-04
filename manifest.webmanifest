@@ -1,0 +1,18 @@
+{
+  "name": "Match Three Game",
+  "short_name": "MTG",
+  "display": "standalone",
+  "description": "Yet another match-three game.",
+  "scope": "/mtg/",
+  "start_url": "/mtg/",
+  "background_color": "#abcdef",
+  "theme_color": "#abcdef",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "density": "1"
+    }
+  ]
+}
