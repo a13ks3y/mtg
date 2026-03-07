@@ -3,16 +3,21 @@
   "short_name": "MTG",
   "display": "standalone",
   "description": "Yet another match-three game.",
-  "scope": "/mtg/",
-  "start_url": "/mtg/",
-  "background_color": "#abcdef",
-  "theme_color": "#abcdef",
+  "start_url": "./",
+  "scope": "./",
+  "background_color": "#111111",
+  "theme_color": "#222222",
   "icons": [
     {
       "src": "icon.png",
-      "sizes": "144x144",
+      "sizes": "192x192",
       "type": "image/png",
-      "density": "1"
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
     }
   ]
 }

@@ -4,6 +4,12 @@ function randomInt(from, to) {
 class App {
     paused = true;
     firstRun = true;
+    level = 1;
+    score = 0;
+    highScore = parseInt(localStorage.getItem('highScore')) || 0;
+    targetScore = 1000;
+    moves = 20;
+    gameOver = false;
     constructor(canvasElement) {
         this.ctx = canvasElement.getContext('2d');
         this.updateCanvasSize();
@@ -14,13 +20,25 @@ class App {
             if (timer) clearTimeout(timer);
             timer = setTimeout(() => {
                 this.updateCanvasSize();
-                this.createGrid();
+                this.createGrid(true, true); // Don't reset score on resize, keep moves
             }, 100);
         });
         this.ctx.canvas.addEventListener('click', this.click.bind(this));
         //CELL_SPEED = 3;
+
+        const audioToggle = document.getElementById('audioToggle');
+        audioToggle.innerText = audioMan.enabled ? '🔊' : '🔈';
+        audioToggle.addEventListener('click', () => {
+            const isEnabled = audioMan.toggle();
+            audioToggle.innerText = isEnabled ? '🔊' : '🔈';
+        });
     }
     click(e) {
+        if (this.gameOver) {
+            this.createGrid(false);
+            return;
+        }
+
         const mx = e.offsetX;
         const my = e.offsetY;
         const mc = Math.floor(mx / CELL_SIZE);
@@ -28,10 +46,13 @@ class App {
         const gem = this.grid.getGem(mc, mr);
         if (gem) {
             if (this.selected) {
+                // Ensure they are adjacent to swap? Wait, the original code allows ANY swap.
+                // Keeping original behavior where you can swap anything for now.
                 this.switchGems(this.selected, gem);
                 this.grid.checked = false;
-                if (this.grid.getMatches().length) {
-                    //this.grid.createGems();
+                const matches = this.grid.getMatches();
+                if (matches.all && matches.all.length) {
+                    this.moves--;
                 } else {
                     this.switchGems(this.selected, gem);
                 }
@@ -44,18 +65,41 @@ class App {
         }
     }
     switchGems(gemA, gemB) {
+        audioMan.playSwap();
         //const gemAIndex = this.grid.getIndex(gemA.c, gemA.r);
         //const gemBIndex = this.grid.getIndex(gemB.c, gemB.r);
         const gemAValue = gemA.v;
         gemA.v = gemB.v;
         gemB.v = gemAValue;
     }
-    createGrid() {
-        const cols = Math.floor(this.ctx.canvas.width / CELL_SIZE);
-        const rows = Math.floor(this.ctx.canvas.height / CELL_SIZE);
-        this.ctx.canvas.width = cols * CELL_SIZE;
-        this.ctx.canvas.height = rows * CELL_SIZE;
-        this.grid = new Grid(cols, rows);
+    createGrid(isNextLevel = false, isResize = false) {
+        if (this.transitioning) return;
+        this.transitioning = true;
+        if (!isNextLevel) {
+            this.score = 0; this.highScore = parseInt(localStorage.getItem("highScore")) || 0;
+            this.level = 1;
+        }
+        
+        this.targetScore = this.level * 1000;
+        if (!isResize) {
+            this.moves = Math.max(10, 25 - this.level * 2);
+        }
+        this.gameOver = false;
+        
+        this.ctx.canvas.classList.add('level-transition');
+        setTimeout(() => {
+            const cols = Math.floor(this.ctx.canvas.width / CELL_SIZE);
+            const rows = Math.floor(this.ctx.canvas.height / CELL_SIZE);
+            this.ctx.canvas.width = cols * CELL_SIZE;
+            this.ctx.canvas.height = rows * CELL_SIZE;
+            this.grid = new Grid(cols, rows, this.score);
+            
+            // Allow layout to process the size change, then remove the transition class
+            requestAnimationFrame(() => {
+                this.ctx.canvas.classList.remove('level-transition');
+                this.transitioning = false;
+            });
+        }, 300); // 300ms for halfway transition
     }
     startLoop() {
         if (this.paused) {
@@ -79,21 +123,63 @@ class App {
         }
     }
     render() {
+        if (!this.grid) return;
         const ctx = this.ctx;
         ctx.fillStyle = 'black';
         ctx.fillRect(0,0,ctx.canvas.width,ctx.canvas.height);
         this.grid.render(ctx);
-        if (this.selected) {
+
+        if (this.grid.score > this.highScore) {
+            this.highScore = this.grid.score;
+            localStorage.setItem('highScore', this.highScore);
+        }
+        
+        ctx.fillStyle = "white";
+        ctx.font = "bold 20px Arial";
+        ctx.fillText("High Score: " + this.highScore, 20, 30);
+        ctx.fillText("Level: " + this.level, 20, 60);
+        ctx.fillText("Score: " + (this.grid.score || 0) + (this.grid.combo > 1 ? "  Combo x" + this.grid.combo : ""), 20, 90);
+        ctx.fillText("Target: " + this.targetScore, 20, 120);
+        ctx.fillText("Moves: " + this.moves, 20, 150);
+
+        if (this.gameOver) {
+            ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+            ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+            ctx.fillStyle = "red";
+            ctx.font = "bold 48px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText("GAME OVER", ctx.canvas.width / 2, ctx.canvas.height / 2);
+            ctx.font = "bold 24px Arial";
+            ctx.fillStyle = "white";
+            ctx.fillText("Click to Restart", ctx.canvas.width / 2, ctx.canvas.height / 2 + 40);
+            ctx.textAlign = "left";
+        } else if (this.selected) {
             const M = 2;
             ctx.strokeStyle = 'cyan';
             ctx.strokeRect(this.selected.x + M, this.selected.y + M, CELL_SIZE - M,CELL_SIZE - M);
         }
     }
     logic(dtt) {
+        if (!this.grid || this.gameOver) return;
         this.grid.logic(dtt);
         if (!this.grid.isFalling && this.firstRun) {
-            //CELL_SPEED = 0.666;
             this.firstRun = false;
+        }
+
+        // Check level progression/gameOver only when the grid is stable
+        const matches = this.grid.getMatches();
+        if (!this.transitioning && !this.grid.isFalling && (!matches.all || matches.all.length === 0)) {
+            if (this.grid.score >= this.targetScore) {
+                this.level++;
+                this.score = this.grid.score;
+                this.createGrid(true);
+            } else if (this.moves <= 0) {
+                this.gameOver = true;
+                if (this.grid.score > this.highScore) {
+                    this.highScore = this.grid.score;
+                    localStorage.setItem('highScore', this.highScore);
+                }
+            }
         }
     }
     loop() {
