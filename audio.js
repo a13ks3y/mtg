@@ -5,6 +5,9 @@ class AudioManager {
         this.bgmOscillator = null;
         this.bgmGain = null;
         this.bgmInterval = null;
+        this.queue = [];
+        this.isProcessingQueue = false;
+        this.lastPlayTime = 0;
     }
 
     init() {
@@ -31,20 +34,42 @@ class AudioManager {
 
     playTone(freq, type, duration, vol=0.1) {
         if (!this.enabled || !this.ctx) return;
+        if (this.queue.length > 5) return; // Cap the queue to prevent massive delays
+        this.queue.push({freq, type, duration, vol});
+        if (!this.isProcessingQueue) {
+            this.processQueue();
+        }
+    }
+
+    processQueue() {
+        if (this.queue.length === 0) {
+            this.isProcessingQueue = false;
+            return;
+        }
+        this.isProcessingQueue = true;
+        
+        const now = this.ctx.currentTime;
+        const playTime = Math.max(now, this.lastPlayTime + 0.05); // 50ms min gap
+        this.lastPlayTime = playTime;
+
+        const {freq, type, duration, vol} = this.queue.shift();
+
         try {
             const osc = this.ctx.createOscillator();
             const gain = this.ctx.createGain();
             osc.type = type;
-            osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-            gain.gain.setValueAtTime(vol, this.ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+            osc.frequency.setValueAtTime(freq, playTime);
+            gain.gain.setValueAtTime(vol, playTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, playTime + duration);
             osc.connect(gain);
             gain.connect(this.ctx.destination);
-            osc.start();
-            osc.stop(this.ctx.currentTime + duration);
+            osc.start(playTime);
+            osc.stop(playTime + duration);
         } catch (e) {
             // Context might not be ready
         }
+
+        setTimeout(() => this.processQueue(), 50);
     }
 
     playSwap() {
