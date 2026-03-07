@@ -104,3 +104,6 @@ dist
 
 # TernJS port file
 .tern-port
+
+PRD.md
+progress.txt
