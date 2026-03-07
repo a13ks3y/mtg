@@ -185,7 +185,7 @@ class App {
     loop() {
         const dt = Date.now() - this.lastTick;
         if (dt > 0) {
-            const dtt = dt / 1000;
+            const dtt = Math.min(dt / 1000, 0.05); // cap delta to 50ms to prevent huge jumps
             this.render();
             this.logic(dtt);
             this.lastTick = Date.now();

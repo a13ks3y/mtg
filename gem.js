@@ -21,20 +21,20 @@ class Gem {
         
         if (this.special === 'bomb') {
             ctx.beginPath();
-            ctx.arc(this.x + CELL_SIZE/2, this.y + CELL_SIZE/2, CELL_SIZE/2.2, 0, Math.PI*2);
+            ctx.arc(Math.round(this.x + CELL_SIZE/2), Math.round(this.y + CELL_SIZE/2), Math.round(CELL_SIZE/2.2), 0, Math.PI*2);
             ctx.fillStyle = 'rgba(255, 255, 0, 0.5)';
             ctx.fill();
         } else if (this.special === 'row') {
             ctx.fillStyle = 'rgba(255, 100, 100, 0.5)';
-            ctx.fillRect(this.x, this.y + CELL_SIZE/2 - 4, CELL_SIZE, 8);
+            ctx.fillRect(Math.round(this.x), Math.round(this.y + CELL_SIZE/2 - 4), CELL_SIZE, 8);
         } else if (this.special === 'col') {
             ctx.fillStyle = 'rgba(100, 255, 100, 0.5)';
-            ctx.fillRect(this.x + CELL_SIZE/2 - 4, this.y, 8, CELL_SIZE);
+            ctx.fillRect(Math.round(this.x + CELL_SIZE/2 - 4), Math.round(this.y), 8, CELL_SIZE);
         }
 
         ctx.font = fontSize + 'px monospace';
         ctx.fillStyle = 'rgba(255,255,255, 1)';
-        ctx.fillText(this.v, this.x + CELL_SIZE / 4, this.y + CELL_SIZE / 1.5);
+        ctx.fillText(this.v, Math.round(this.x + CELL_SIZE / 4), Math.round(this.y + CELL_SIZE / 1.5));
         ctx.restore();
     }
     moveTo(x, y) {
@@ -46,13 +46,13 @@ class Gem {
             const dx = this.target.x - this.x;
             const dy = this.target.y - this.y;
             
-            if (Math.abs(dx) > 1) {
+            if (Math.abs(dx) > speed * dtt) {
                 this.x += Math.sign(dx) * speed * dtt;
             } else {
                 this.x = this.target.x;
             }
             
-            if (Math.abs(dy) > 1) {
+            if (Math.abs(dy) > speed * dtt) {
                 this.y += Math.sign(dy) * speed * dtt;
             } else {
                 this.y = this.target.y;

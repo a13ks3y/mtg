@@ -172,7 +172,8 @@ class Grid {
 
     logic(dtt) {
         this.isFalling = false;
-        for (let cell of this.cells) {
+        for (let i = this.cells.length - 1; i >= 0; i--) {
+            let cell = this.cells[i];
             cell.logic(dtt, this.rows);
             if (cell.gem) {
                 if (cell.gem.target) {
@@ -272,11 +273,11 @@ class Grid {
             for (let p of this.particles) {
                 ctx.save();
                 ctx.globalAlpha = Math.max(0, p.life);
-                ctx.translate(p.x, p.y);
+                ctx.translate(Math.round(p.x), Math.round(p.y));
                 ctx.rotate(p.rot);
                 ctx.font = p.size + 'px monospace';
                 ctx.fillStyle = 'rgba(255,255,255,0.9)';
-                ctx.fillText(p.v, -p.size/2, p.size/3);
+                ctx.fillText(p.v, Math.round(-p.size/2), Math.round(p.size/3));
                 ctx.restore();
             }
         }
@@ -284,9 +285,9 @@ class Grid {
         if (this.floatingTexts) {
             for (let i = this.floatingTexts.length - 1; i >= 0; i--) {
                 let ft = this.floatingTexts[i];
-                ctx.fillStyle = "rgba(255, 255, 0, " + ft.life + ")";
+                ctx.fillStyle = "rgba(255, 255, 0, " + Math.max(0, ft.life) + ")";
                 ctx.font = "bold 35px Arial";
-                ctx.fillText(ft.text, ft.x, ft.y);
+                ctx.fillText(ft.text, Math.round(ft.x), Math.round(ft.y));
                 ft.y -= 1.5;
                 ft.life -= 0.015;
                 if (ft.life <= 0) {
