@@ -167,8 +167,7 @@ class App {
         }
 
         // Check level progression/gameOver only when the grid is stable
-        const matches = this.grid.getMatches();
-        if (!this.transitioning && !this.grid.isFalling && (!matches.all || matches.all.length === 0)) {
+        if (!this.transitioning && !this.grid.isFalling && !this.grid.hasActiveMatches) {
             if (this.grid.score >= this.targetScore) {
                 this.level++;
                 this.score = this.grid.score;
@@ -183,12 +182,13 @@ class App {
         }
     }
     loop() {
-        const dt = Date.now() - this.lastTick;
+        const now = Date.now();
+        const dt = now - this.lastTick;
         if (dt > 0) {
             const dtt = Math.min(dt / 1000, 0.05); // cap delta to 50ms to prevent huge jumps
             this.render();
             this.logic(dtt);
-            this.lastTick = Date.now();
+            this.lastTick = now;
         }
         !this.paused && requestAnimationFrame(this.loop.bind(this));
     }

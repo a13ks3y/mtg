@@ -4,6 +4,7 @@ class Grid {
         this.rows = rows;
         this.score = startingScore;
         this.cells = [];
+        this.hasActiveMatches = false;
 
         for (let c = 0; c < this.cols; c++) {
             for (let r = 0; r < this.rows; r++) {
@@ -16,7 +17,26 @@ class Grid {
             cell.prev = prev;
             cell.next = next;
         }
+        this.buildBoardCache();
         this.createGems();
+    }
+    buildBoardCache() {
+        const boardCanvas = document.createElement('canvas');
+        boardCanvas.width = this.cols * CELL_SIZE;
+        boardCanvas.height = this.rows * CELL_SIZE;
+        const boardCtx = boardCanvas.getContext('2d');
+
+        boardCtx.fillStyle = 'green';
+        boardCtx.fillRect(0, 0, boardCanvas.width, boardCanvas.height);
+        boardCtx.fillStyle = 'black';
+        for (let r = 0; r < this.rows; r++) {
+            for (let c = 0; c < this.cols; c++) {
+                const x = c * CELL_SIZE;
+                const y = r * CELL_SIZE;
+                boardCtx.fillRect(x + 1, y + 1, CELL_SIZE - 2, CELL_SIZE - 2);
+            }
+        }
+        this.boardCache = boardCanvas;
     }
     createGems() {
         for (let cell of this.cells) {
@@ -99,10 +119,15 @@ class Grid {
             }
         }
         
+        const flattenedH = hMatches.flat();
+        const flattenedV = vMatches.flat();
+
         return {
             hMatches,
             vMatches,
-            all: hMatches.flat().concat(vMatches.flat())
+            flattenedH,
+            flattenedV,
+            all: flattenedH.concat(flattenedV)
         };
     }
     combo = 1;
@@ -110,6 +135,7 @@ class Grid {
     particles = [];
 
     spawnParticles(x, y, v) {
+        if (this.particles.length > 280) return;
         for (let i = 0; i < 12; i++) {
             const angle = Math.random() * Math.PI * 2;
             const speed = Math.random() * 200 + 50;
@@ -120,9 +146,7 @@ class Grid {
                 vy: Math.sin(angle) * speed,
                 life: 1.0,
                 v: v,
-                size: Math.random() * 8 + 12,
-                rot: Math.random() * Math.PI * 2,
-                rotSpeed: (Math.random() - 0.5) * 5
+                size: Math.random() * 8 + 12
             });
         }
     }
@@ -190,7 +214,6 @@ class Grid {
                 p.x += p.vx * dtt;
                 p.y += p.vy * dtt;
                 p.vy += 400 * dtt; // gravity
-                p.rot += p.rotSpeed * dtt;
                 p.life -= dtt * 1.5;
                 if (p.life <= 0) {
                     this.particles.splice(i, 1);
@@ -203,14 +226,15 @@ class Grid {
                 cell.checkLast(this.rows);
             }
             const matchData = this.getMatches();
+            this.hasActiveMatches = matchData.all && matchData.all.length > 0;
             if (matchData.all && matchData.all.length > 0) {
                 audioMan.playMatch(this.combo);
                 let matchCount = 0;
                 let tx = 0, ty = 0;
 
                 let nextSpecials = new Map();
-                let flattenedH = matchData.hMatches.flat();
-                let flattenedV = matchData.vMatches.flat();
+                let flattenedH = matchData.flattenedH;
+                let flattenedV = matchData.flattenedV;
 
                 matchData.hMatches.forEach(group => {
                     if (group.length >= 5) {
@@ -227,7 +251,8 @@ class Grid {
                     }
                 });
 
-                let intersection = flattenedH.filter(g => flattenedV.includes(g));
+                const verticalSet = new Set(flattenedV);
+                let intersection = flattenedH.filter(g => verticalSet.has(g));
                 intersection.forEach(g => {
                     nextSpecials.set(g, 'bomb');
                 });
@@ -256,30 +281,28 @@ class Grid {
                     }
                 }
             } else {
+                this.hasActiveMatches = false;
                 this.combo = 1;
                 this.scoringDebounce = false;
             }
+        } else {
+            this.hasActiveMatches = false;
         }
     }
     render(ctx) {
-        for (let cell of this.cells) {
-            cell.render(ctx);
-        }
+        ctx.drawImage(this.boardCache, 0, 0);
         for (let cell of this.cells) {
             cell.gem?.render(ctx);
         }
 
         if (this.particles && this.particles.length) {
+            ctx.fillStyle = 'rgba(255,255,255,0.9)';
             for (let p of this.particles) {
-                ctx.save();
                 ctx.globalAlpha = Math.max(0, p.life);
-                ctx.translate(Math.round(p.x), Math.round(p.y));
-                ctx.rotate(p.rot);
                 ctx.font = p.size + 'px monospace';
-                ctx.fillStyle = 'rgba(255,255,255,0.9)';
-                ctx.fillText(p.v, Math.round(-p.size/2), Math.round(p.size/3));
-                ctx.restore();
+                ctx.fillText(p.v, Math.round(p.x - p.size / 2), Math.round(p.y + p.size / 3));
             }
+            ctx.globalAlpha = 1;
         }
 
         if (this.floatingTexts) {
