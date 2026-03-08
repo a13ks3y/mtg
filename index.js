@@ -12,6 +12,9 @@ class App {
     gameOver = false;
     constructor(canvasElement) {
         this.ctx = canvasElement.getContext('2d');
+        this.ctx.imageSmoothingEnabled = false;
+        this.boundLoop = this.loop.bind(this);
+        this.hudFont = 'bold 20px Arial';
         this.updateCanvasSize();
         this.startLoop();
         this.createGrid();
@@ -104,8 +107,8 @@ class App {
     startLoop() {
         if (this.paused) {
             this.paused = false;
-            this.lastTick = Date.now();
-            requestAnimationFrame(this.loop.bind(this));
+            this.lastTick = performance.now();
+            requestAnimationFrame(this.boundLoop);
         } else {
             console.error('Already in loop!');
         }
@@ -131,11 +134,10 @@ class App {
 
         if (this.grid.score > this.highScore) {
             this.highScore = this.grid.score;
-            localStorage.setItem('highScore', this.highScore);
         }
         
         ctx.fillStyle = "white";
-        ctx.font = "bold 20px Arial";
+        ctx.font = this.hudFont;
         ctx.fillText("High Score: " + this.highScore, 20, 30);
         ctx.fillText("Level: " + this.level, 20, 60);
         ctx.fillText("Score: " + (this.grid.score || 0) + (this.grid.combo > 1 ? "  Combo x" + this.grid.combo : ""), 20, 90);
@@ -156,12 +158,16 @@ class App {
         } else if (this.selected) {
             const M = 2;
             ctx.strokeStyle = 'cyan';
-            ctx.strokeRect(this.selected.x + M, this.selected.y + M, CELL_SIZE - M,CELL_SIZE - M);
+            ctx.strokeRect(Math.round(this.selected.x + M), Math.round(this.selected.y + M), CELL_SIZE - M,CELL_SIZE - M);
         }
     }
     logic(dtt) {
         if (!this.grid || this.gameOver) return;
         this.grid.logic(dtt);
+        if (this.grid.score > this.highScore) {
+            this.highScore = this.grid.score;
+            localStorage.setItem('highScore', String(this.highScore));
+        }
         if (!this.grid.isFalling && this.firstRun) {
             this.firstRun = false;
         }
@@ -182,15 +188,15 @@ class App {
         }
     }
     loop() {
-        const now = Date.now();
+        const now = performance.now();
         const dt = now - this.lastTick;
         if (dt > 0) {
             const dtt = Math.min(dt / 1000, 0.05); // cap delta to 50ms to prevent huge jumps
-            this.render();
             this.logic(dtt);
+            this.render();
             this.lastTick = now;
         }
-        !this.paused && requestAnimationFrame(this.loop.bind(this));
+        !this.paused && requestAnimationFrame(this.boundLoop);
     }
 }
 

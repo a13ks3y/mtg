@@ -24,6 +24,9 @@ Refactor, fix, and optimize the current Match-3 game implementation (comprising 
 - [x] Don't forget to commit and push
 - [x] optimize performance, at least 10 animations at the same time should be at least 20fps
 - [x] commit and push
+- [x] fix jumping flickering artifacts
+- [x] performance is still very poor
+- [x] commit and push as usual
 ## Technical Details
 - **Stack**: Vanilla JavaScript (ES6+), HTML5, CSS3.
 - **Architecture**: Progressive Web App (PWA) with Service Worker caching.

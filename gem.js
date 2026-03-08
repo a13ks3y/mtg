@@ -15,8 +15,7 @@ class Gem {
     render(ctx) {
         if (this.removed) return;
         const fontSize = Math.floor(CELL_SIZE / 2);
-        
-        ctx.save();
+        const prevAlpha = ctx.globalAlpha;
         ctx.globalAlpha = this.a;
         
         if (this.special === 'bomb') {
@@ -35,7 +34,7 @@ class Gem {
         ctx.font = fontSize + 'px monospace';
         ctx.fillStyle = 'rgba(255,255,255, 1)';
         ctx.fillText(this.v, Math.round(this.x + CELL_SIZE / 4), Math.round(this.y + CELL_SIZE / 1.5));
-        ctx.restore();
+        ctx.globalAlpha = prevAlpha;
     }
     moveTo(x, y) {
         this.target = {x, y};
@@ -45,20 +44,23 @@ class Gem {
             const speed = CELL_SPEED * 2.5;
             const dx = this.target.x - this.x;
             const dy = this.target.y - this.y;
+            const maxStep = speed * dtt;
             
-            if (Math.abs(dx) > speed * dtt) {
-                this.x += Math.sign(dx) * speed * dtt;
+            if (Math.abs(dx) > maxStep) {
+                this.x += Math.sign(dx) * maxStep;
             } else {
                 this.x = this.target.x;
             }
             
-            if (Math.abs(dy) > speed * dtt) {
-                this.y += Math.sign(dy) * speed * dtt;
+            if (Math.abs(dy) > maxStep) {
+                this.y += Math.sign(dy) * maxStep;
             } else {
                 this.y = this.target.y;
             }
             
-            if (this.x === this.target.x && this.y === this.target.y) {
+            if (Math.abs(this.target.x - this.x) < 0.001 && Math.abs(this.target.y - this.y) < 0.001) {
+                this.x = this.target.x;
+                this.y = this.target.y;
                 this.target = null;
                 if (typeof audioMan !== 'undefined' && audioMan) {
                     audioMan.playFall();

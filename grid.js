@@ -5,6 +5,7 @@ class Grid {
         this.score = startingScore;
         this.cells = [];
         this.hasActiveMatches = false;
+        this._seenId = 1;
 
         for (let c = 0; c < this.cols; c++) {
             for (let r = 0; r < this.rows; r++) {
@@ -55,9 +56,9 @@ class Grid {
 
     getMatches() {
         const vMatches = [];
-        let vMatch = [];
+        const flattenedV = [];
         for (let c = 0; c < this.cols; c++) {
-            vMatch = [];
+            let vMatch = [];
             for (let r = 0; r < this.rows; r++) {
                 const gem = this.getGem(c, r);
                 const prevGem = vMatch[vMatch.length - 1];
@@ -69,6 +70,7 @@ class Grid {
                         if ((prevGem.v !== gem.v) || (r === this.rows - 1)) {
                             if (vMatch.length >= 3) {
                                 vMatches.push(vMatch);
+                                for (let i = 0; i < vMatch.length; i++) flattenedV.push(vMatch[i]);
                                 vMatch = [gem];
                             } else {
                                 vMatch = [gem];
@@ -80,17 +82,17 @@ class Grid {
                 } else {
                     if (vMatch.length >= 3) {
                         vMatches.push(vMatch);
+                        for (let i = 0; i < vMatch.length; i++) flattenedV.push(vMatch[i]);
                     }
                     vMatch = [];
                 }
             }
         }
-        //vMatches.flat().forEach(gem => gem.remove = true);
 
         const hMatches = [];
-        let hMatch = [];
+        const flattenedH = [];
         for (let r = 0; r < this.rows; r++) {
-            hMatch = [];
+            let hMatch = [];
             for (let c = 0; c < this.cols; c++) {
                 const gem = this.getGem(c, r);
                 const prevGem = hMatch[hMatch.length - 1];
@@ -102,6 +104,7 @@ class Grid {
                         if ((prevGem.v !== gem.v) || (c === this.cols - 1)) {
                             if (hMatch.length >= 3) {
                                 hMatches.push(hMatch);
+                                for (let i = 0; i < hMatch.length; i++) flattenedH.push(hMatch[i]);
                                 hMatch = [gem];
                             } else {
                                 hMatch = [gem];
@@ -113,21 +116,24 @@ class Grid {
                 } else {
                     if (hMatch.length >= 3) {
                         hMatches.push(hMatch);
+                        for (let i = 0; i < hMatch.length; i++) flattenedH.push(hMatch[i]);
                     }
                     hMatch = [];
                 }
             }
         }
-        
-        const flattenedH = hMatches.flat();
-        const flattenedV = vMatches.flat();
+
+        const all = flattenedH.slice();
+        for (let i = 0; i < flattenedV.length; i++) {
+            all.push(flattenedV[i]);
+        }
 
         return {
             hMatches,
             vMatches,
             flattenedH,
             flattenedV,
-            all: flattenedH.concat(flattenedV)
+            all
         };
     }
     combo = 1;
@@ -135,8 +141,8 @@ class Grid {
     particles = [];
 
     spawnParticles(x, y, v) {
-        if (this.particles.length > 280) return;
-        for (let i = 0; i < 12; i++) {
+        if (this.particles.length > 180) return;
+        for (let i = 0; i < 8; i++) {
             const angle = Math.random() * Math.PI * 2;
             const speed = Math.random() * 200 + 50;
             this.particles.push({
@@ -158,27 +164,45 @@ class Grid {
             text: "+" + points,
             x: x,
             y: y,
-            life: 1.0
+            life: 1.0,
+            vy: -90
         });
     }
 
     getPowerupMatches(initialMatches) {
-        let matches = new Set(initialMatches);
-        let queue = [...matches];
+        const seenId = ++this._seenId;
+        const matches = [];
+        const queue = [];
+
+        for (let i = 0; i < initialMatches.length; i++) {
+            const gem = initialMatches[i];
+            if (!gem || gem._seenId === seenId) continue;
+            gem._seenId = seenId;
+            matches.push(gem);
+            queue.push(gem);
+        }
         
-        while (queue.length > 0) {
-            let current = queue.shift();
+        for (let qi = 0; qi < queue.length; qi++) {
+            const current = queue[qi];
             if (current.special === 'row') {
                 let r = Math.round(current.y / CELL_SIZE);
                 for (let c = 0; c < this.cols; c++) {
                     let g = this.getGem(c, r);
-                    if (g && !matches.has(g)) { matches.add(g); queue.push(g); }
+                    if (g && g._seenId !== seenId) {
+                        g._seenId = seenId;
+                        matches.push(g);
+                        queue.push(g);
+                    }
                 }
             } else if (current.special === 'col') {
                 let c = Math.round(current.x / CELL_SIZE);
                 for (let r = 0; r < this.rows; r++) {
                     let g = this.getGem(c, r);
-                    if (g && !matches.has(g)) { matches.add(g); queue.push(g); }
+                    if (g && g._seenId !== seenId) {
+                        g._seenId = seenId;
+                        matches.push(g);
+                        queue.push(g);
+                    }
                 }
             } else if (current.special === 'bomb') {
                 let cy = Math.round(current.y / CELL_SIZE);
@@ -186,12 +210,33 @@ class Grid {
                 for (let r = cy - 1; r <= cy + 1; r++) {
                     for (let c = cx - 1; c <= cx + 1; c++) {
                         let g = this.getGem(c, r);
-                        if (g && !matches.has(g)) { matches.add(g); queue.push(g); }
+                        if (g && g._seenId !== seenId) {
+                            g._seenId = seenId;
+                            matches.push(g);
+                            queue.push(g);
+                        }
                     }
                 }
             }
         }
-        return [...matches];
+        return matches;
+    }
+
+    refillColumns() {
+        for (let c = 0; c < this.cols; c++) {
+            let spawnCount = 0;
+            for (let r = 0; r < this.rows; r++) {
+                const cell = this.getCell(c, r);
+                if (cell.gem) break;
+                spawnCount++;
+            }
+            for (let i = 0; i < spawnCount; i++) {
+                const cell = this.getCell(c, i);
+                const gem = new Gem(c, i - spawnCount);
+                gem.moveTo(cell.x, cell.y);
+                cell.gem = gem;
+            }
+        }
     }
 
     logic(dtt) {
@@ -210,21 +255,34 @@ class Grid {
         }
         if (this.particles && this.particles.length > 0) {
             for (let i = this.particles.length - 1; i >= 0; i--) {
-                let p = this.particles[i];
+                const p = this.particles[i];
                 p.x += p.vx * dtt;
                 p.y += p.vy * dtt;
                 p.vy += 400 * dtt; // gravity
                 p.life -= dtt * 1.5;
                 if (p.life <= 0) {
-                    this.particles.splice(i, 1);
+                    const last = this.particles.length - 1;
+                    this.particles[i] = this.particles[last];
+                    this.particles.pop();
+                }
+            }
+        }
+
+        if (this.floatingTexts && this.floatingTexts.length > 0) {
+            for (let i = this.floatingTexts.length - 1; i >= 0; i--) {
+                const ft = this.floatingTexts[i];
+                ft.y += ft.vy * dtt;
+                ft.life -= dtt * 0.9;
+                if (ft.life <= 0) {
+                    const last = this.floatingTexts.length - 1;
+                    this.floatingTexts[i] = this.floatingTexts[last];
+                    this.floatingTexts.pop();
                 }
             }
         }
 
         if (!this.isFalling) {
-            for (let cell of this.cells) {
-                cell.checkLast(this.rows);
-            }
+            this.refillColumns();
             const matchData = this.getMatches();
             this.hasActiveMatches = matchData.all && matchData.all.length > 0;
             if (matchData.all && matchData.all.length > 0) {
@@ -251,11 +309,14 @@ class Grid {
                     }
                 });
 
-                const verticalSet = new Set(flattenedV);
-                let intersection = flattenedH.filter(g => verticalSet.has(g));
-                intersection.forEach(g => {
-                    nextSpecials.set(g, 'bomb');
-                });
+                const seenId = ++this._seenId;
+                for (let i = 0; i < flattenedV.length; i++) {
+                    flattenedV[i]._seenId = seenId;
+                }
+                for (let i = 0; i < flattenedH.length; i++) {
+                    const g = flattenedH[i];
+                    if (g._seenId === seenId) nextSpecials.set(g, 'bomb');
+                }
 
                 let finalMatches = this.getPowerupMatches(matchData.all);
                 finalMatches = finalMatches.filter(g => !nextSpecials.has(g));
@@ -311,11 +372,6 @@ class Grid {
                 ctx.fillStyle = "rgba(255, 255, 0, " + Math.max(0, ft.life) + ")";
                 ctx.font = "bold 35px Arial";
                 ctx.fillText(ft.text, Math.round(ft.x), Math.round(ft.y));
-                ft.y -= 1.5;
-                ft.life -= 0.015;
-                if (ft.life <= 0) {
-                    this.floatingTexts.splice(i, 1);
-                }
             }
         }
     }
