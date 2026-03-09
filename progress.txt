@@ -44,3 +44,8 @@ Completed: performance is still very poor! - Reduced font re-assignment thrashin
 \nCompleted: commit and push as usual - successfully committed and pushed to remote master
 [2026-03-09T06:01:14.890Z] ✅ Completed: user should able to switch only adjusted cells places, commit and push when done (took 28s)
 Completed: user should able to switch only adjusted cells places, commit and push when done - Restricted gem swapping to adjacent cells only
+[2026-03-09T06:44:37.245Z] ✅ Completed: center gems (took 72s)
+[2026-03-09T06:42:58.155Z] ✅ Completed: remove completed tasks (took 29s)
+Completed: remove completed tasks - Removed all previously completed tasks from PRD.md
+
+Completed: center gems - Centered the gem text inside the cell using textAlign center and textBaseline middle

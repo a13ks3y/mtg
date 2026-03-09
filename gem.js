@@ -34,7 +34,9 @@ class Gem {
         const font = fontSize + 'px monospace';
         if (ctx.font !== font) ctx.font = font;
         if (ctx.fillStyle !== '#ffffff') ctx.fillStyle = '#ffffff';
-        ctx.fillText(this.v, Math.round(this.x + CELL_SIZE / 4), Math.round(this.y + CELL_SIZE / 1.5));
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(this.v, Math.round(this.x + CELL_SIZE / 2), Math.round(this.y + CELL_SIZE / 2));
         ctx.globalAlpha = prevAlpha;
     }
     moveTo(x, y) {
