@@ -6,7 +6,7 @@ Refactor, fix, and optimize the current Match-3 game implementation (comprising 
 ## Tasks
 - [x] remove completed tasks
 - [x] center gems
-- [ ] commit and push
+- [x] commit and push
 ## Technical Details
 - **Stack**: Vanilla JavaScript (ES6+), HTML5, CSS3.
 - **Architecture**: Progressive Web App (PWA) with Service Worker caching.
