@@ -137,7 +137,7 @@ class App {
         }
         
         ctx.fillStyle = "white";
-        ctx.font = this.hudFont;
+        if (ctx.font !== this.hudFont) ctx.font = this.hudFont;
         ctx.fillText("High Score: " + this.highScore, 20, 30);
         ctx.fillText("Level: " + this.level, 20, 60);
         ctx.fillText("Score: " + (this.grid.score || 0) + (this.grid.combo > 1 ? "  Combo x" + this.grid.combo : ""), 20, 90);

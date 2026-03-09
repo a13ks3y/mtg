@@ -358,26 +358,31 @@ class Grid {
 
         if (this.particles && this.particles.length) {
             ctx.fillStyle = 'rgba(255,255,255,0.9)';
+            let lastFont = '';
             for (let p of this.particles) {
                 ctx.globalAlpha = Math.max(0, p.life);
-                ctx.font = p.size + 'px monospace';
+                let currentFont = Math.round(p.size) + 'px monospace';
+                if (lastFont !== currentFont) {
+                    ctx.font = currentFont;
+                    lastFont = currentFont;
+                }
                 ctx.fillText(p.v, Math.round(p.x - p.size / 2), Math.round(p.y + p.size / 3));
             }
             ctx.globalAlpha = 1;
         }
 
         if (this.floatingTexts) {
+            if (ctx.font !== "bold 35px Arial") ctx.font = "bold 35px Arial";
             for (let i = this.floatingTexts.length - 1; i >= 0; i--) {
                 let ft = this.floatingTexts[i];
                 ctx.fillStyle = "rgba(255, 255, 0, " + Math.max(0, ft.life) + ")";
-                ctx.font = "bold 35px Arial";
                 ctx.fillText(ft.text, Math.round(ft.x), Math.round(ft.y));
             }
         }
     }
     getGem(c, r) {
         const cell = this.getCell(c, r);
-        if (cell) return cell.gem;
+        if (cell && cell.gem && !cell.gem.remove) return cell.gem;
         return null;
     }
 }

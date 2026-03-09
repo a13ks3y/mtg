@@ -14,18 +14,10 @@ class Cell {
         if (this.gem) {
             this.gem.logic(dtt);
 
-            if (this.next && !this.next.gem) {
+            if (this.next && !this.next.gem && !this.gem.remove) {
                 this.gem.moveTo(this.next.x, this.next.y);
-                        this.next.gem = this.gem;
-                        this.gem = null;
-                // (function wait(){
-                //     if (!this.gem.target) {
-                //         this.next.gem = this.gem;
-                //         this.gem = null;
-                //     } else {
-                //         setTimeout(wait.bind(this), 66);
-                //     }
-                // }.bind(this)());
+                this.next.gem = this.gem;
+                this.gem = null;
             }
 
         }

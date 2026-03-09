@@ -16,7 +16,7 @@ class Gem {
         if (this.removed) return;
         const fontSize = Math.floor(CELL_SIZE / 2);
         const prevAlpha = ctx.globalAlpha;
-        ctx.globalAlpha = this.a;
+        if (ctx.globalAlpha !== this.a) ctx.globalAlpha = this.a;
         
         if (this.special === 'bomb') {
             ctx.beginPath();
@@ -31,8 +31,9 @@ class Gem {
             ctx.fillRect(Math.round(this.x + CELL_SIZE/2 - 4), Math.round(this.y), 8, CELL_SIZE);
         }
 
-        ctx.font = fontSize + 'px monospace';
-        ctx.fillStyle = 'rgba(255,255,255, 1)';
+        const font = fontSize + 'px monospace';
+        if (ctx.font !== font) ctx.font = font;
+        if (ctx.fillStyle !== '#ffffff') ctx.fillStyle = '#ffffff';
         ctx.fillText(this.v, Math.round(this.x + CELL_SIZE / 4), Math.round(this.y + CELL_SIZE / 1.5));
         ctx.globalAlpha = prevAlpha;
     }

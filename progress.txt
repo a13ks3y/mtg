@@ -38,3 +38,5 @@ Completed: commit and push - Updated PRD checklist to done, committed pending ga
 [2026-03-08T23:31:21.572Z] ✅ Completed: fix jumping flickering artifacts (took 73s)
 [2026-03-08T23:33:17.682Z] ✅ Completed: performance is still very poor (took 104s)
 [2026-03-08T23:34:14.552Z] ✅ Completed: commit and push as usual (took 44s)
+Completed: performance is still very poor! - Reduced font re-assignment thrashing in canvas render loops by caching font state, preventing excessive context state changes. Excluded fading gems from grid match detection to stop redundant recalculations.
+[2026-03-09T05:37:53.503Z] ✅ Completed: performance is still very poor! (took 113s)
