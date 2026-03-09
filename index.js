@@ -49,17 +49,18 @@ class App {
         const gem = this.grid.getGem(mc, mr);
         if (gem) {
             if (this.selected) {
-                // Ensure they are adjacent to swap? Wait, the original code allows ANY swap.
-                // Keeping original behavior where you can swap anything for now.
-                this.switchGems(this.selected, gem);
-                this.grid.checked = false;
-                const matches = this.grid.getMatches();
-                if (matches.all && matches.all.length) {
-                    this.moves--;
-                } else {
+                const isAdjacent = Math.abs(gem.c - this.selected.c) + Math.abs(gem.r - this.selected.r) === 1;
+                if (isAdjacent) {
                     this.switchGems(this.selected, gem);
+                    this.grid.checked = false;
+                    const matches = this.grid.getMatches();
+                    if (matches.all && matches.all.length) {
+                        this.moves--;
+                    } else {
+                        this.switchGems(this.selected, gem);
+                    }
                 }
-                this.selected = false;
+                this.selected = null;
             } else {
                 this.selected = gem;
             }

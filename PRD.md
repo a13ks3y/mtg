@@ -26,7 +26,8 @@ Refactor, fix, and optimize the current Match-3 game implementation (comprising 
 - [x] commit and push
 - [x] fix jumping flickering artifacts
 - [x] performance is still very poor!
-- [ ] commit and push as usual
+- [x] commit and push as usual
+- [x] user should able to switch only adjusted cells places, commit and push when done
 ## Technical Details
 - **Stack**: Vanilla JavaScript (ES6+), HTML5, CSS3.
 - **Architecture**: Progressive Web App (PWA) with Service Worker caching.
